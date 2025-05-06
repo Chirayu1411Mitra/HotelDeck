@@ -3,29 +3,70 @@ package com.hoteldeck;
 import java.time.LocalDate;
 
 public class Booking {
-    private int bookingId;
-    private int customerId;
-    private int roomNumber;
-    private LocalDate checkIn;
-    private LocalDate checkOut;
+    private int id;
+    private Room room;
+    private Customer customer;
+    private LocalDate checkInDate;
+    private LocalDate checkOutDate;
 
-    public Booking(int bookingId, int customerId, int roomNumber, LocalDate checkIn, LocalDate checkOut) {
-        this.bookingId = bookingId;
-        this.customerId = customerId;
-        this.roomNumber = roomNumber;
-        this.checkIn = checkIn;
-        this.checkOut = checkOut;
+    // Constructor
+    public Booking(int id, Room room, Customer customer, LocalDate checkInDate, LocalDate checkOutDate) {
+        this.id = id;
+        this.room = room;
+        this.customer = customer;
+        this.checkInDate = checkInDate;
+        this.checkOutDate = checkOutDate;
     }
 
-    public int getBookingId() { return bookingId; }
-    public int getCustomerId() { return customerId; }
-    public int getRoomNumber() { return roomNumber; }
-    public LocalDate getCheckIn() { return checkIn; }
-    public LocalDate getCheckOut() { return checkOut; }
+    // Getters and Setters
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public Room getRoom() {
+        return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+
+    public LocalDate getCheckInDate() {
+        return checkInDate;
+    }
+
+    public void setCheckInDate(LocalDate checkInDate) {
+        this.checkInDate = checkInDate;
+    }
+
+    public LocalDate getCheckOutDate() {
+        return checkOutDate;
+    }
+
+    public void setCheckOutDate(LocalDate checkOutDate) {
+        this.checkOutDate = checkOutDate;
+    }
 
     @Override
     public String toString() {
-        return "Booking #" + bookingId + ": Room " + roomNumber + " for"+
-                " from " + checkIn + " to " + checkOut;
+        return "Booking{" +
+                "id=" + id +
+                ", room=" + room +
+                ", customer=" + customer +
+                ", checkInDate=" + checkInDate +
+                ", checkOutDate=" + checkOutDate +
+                '}';
     }
 }

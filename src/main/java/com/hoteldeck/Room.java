@@ -1,27 +1,59 @@
 package com.hoteldeck;
 
 public class Room {
-    private int number;
+    private int id;
     private String type;
     private double price;
-    private boolean booked;
+    private boolean isBooked; // Tracks if the room is booked
 
-    public Room(int number, String type, double price) {
-        this.number = number;
+    // Constructor
+    public Room(int id, String type, double price) {
+        this.id = id;
         this.type = type;
         this.price = price;
-        this.booked = false;
+        this.isBooked = false; // Default: not booked
     }
 
-    public int getNumber() { return number; }
-    public String getType() { return type; }
-    public double getPrice() { return price; }
-    public boolean isBooked() { return booked; }
+    // Getters and Setters
+    public int getId() {
+        return id;
+    }
 
-    public void setBooked(boolean booked) { this.booked = booked; }
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public boolean isBooked() {
+        return isBooked;
+    }
+
+    public void setBooked(boolean booked) {
+        isBooked = booked;
+    }
 
     @Override
     public String toString() {
-        return number + " | " + type + " | $" + price + " | Booked: " + booked;
+        return "Room{" +
+                "id=" + id +
+                ", type='" + type + '\'' +
+                ", price=" + price +
+                ", isBooked=" + isBooked +
+                '}';
     }
 }
