@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-
+import java.util.regex.Pattern;
 
 public class HotelDeck {
     private LinkedList<Customer> customers = new LinkedList<>();
@@ -25,6 +25,19 @@ public class HotelDeck {
         loadBookingsFromCSV();
     }
 
+    // Validation helpers
+    private boolean isValidName(String name) {
+        return Pattern.matches("[a-zA-Z ]+", name);
+    }
+
+    private boolean isValidEmail(String email) {
+        return email.contains("@");
+    }
+
+    private boolean isValidPhone(String phone) {
+        return Pattern.matches("\\d{10}", phone);
+    }
+
     private void loadCustomersFromCSV() {
         try (BufferedReader reader = new BufferedReader(new FileReader(CUSTOMER_CSV))) {
             String line;
@@ -32,17 +45,15 @@ public class HotelDeck {
             while ((line = reader.readLine()) != null) {
                 if (isFirstLine) {
                     isFirstLine = false;
-                    continue; // Skip header
+                    continue;
                 }
                 String[] parts = line.split(",");
-
-                    int id = Integer.parseInt(parts[0].trim());
-                    String name = parts[1].trim();
-                    String email = parts[2].trim();
-                    String phoneNumber = parts[3].trim();
-                    customers.add(new Customer(id, name , email,phoneNumber ));
-                    customerIds.add(id);
-
+                int id = Integer.parseInt(parts[0].trim());
+                String name = parts[1].trim();
+                String email = parts[2].trim();
+                String phoneNumber = parts[3].trim();
+                customers.add(new Customer(id, name, email, phoneNumber));
+                customerIds.add(id);
             }
         } catch (IOException e) {
             System.out.println("Error loading customers: " + e.getMessage());
@@ -50,7 +61,6 @@ public class HotelDeck {
     }
 
     private void saveCustomersToCSV() {
-
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(CUSTOMER_CSV))) {
             writer.write("id,name,email,phoneNumber\n");
             for (Customer customer : customers) {
@@ -66,36 +76,23 @@ public class HotelDeck {
     private void loadRoomsFromCSV() {
         File file = new File(ROOM_CSV);
         if (!file.exists()) return;
-
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             boolean isFirstLine = true;
-
             while ((line = br.readLine()) != null) {
                 if (isFirstLine) {
-                    isFirstLine = false; // Skip header row
+                    isFirstLine = false;
                     continue;
                 }
-
                 String[] data = line.split(",");
-                if (data.length < 4) {
-                    System.out.println("Skipping invalid line (not enough data): " + line);
-                    continue; // Skip lines that don't have enough data
-                }
-
-                try {
-                    int id = Integer.parseInt(data[0].trim());
-                    String type = data[1].trim();
-                    double price = Double.parseDouble(data[2].trim());
-                    boolean isBooked = Boolean.parseBoolean(data[3].trim());
-
-                    // Add room to the LinkedList
-                    Room room = new Room(id, type, price);
-                    room.setBooked(isBooked);
-                    rooms.add(room);
-                } catch (NumberFormatException e) {
-                    System.out.println("Skipping invalid line (number format error): " + line);
-                }
+                if (data.length < 4) continue;
+                int id = Integer.parseInt(data[0].trim());
+                String type = data[1].trim();
+                double price = Double.parseDouble(data[2].trim());
+                boolean isBooked = Boolean.parseBoolean(data[3].trim());
+                Room room = new Room(id, type, price);
+                room.setBooked(isBooked);
+                rooms.add(room);
             }
         } catch (IOException e) {
             System.out.println("Error loading rooms: " + e.getMessage());
@@ -104,8 +101,7 @@ public class HotelDeck {
 
     public static void saveRoomsToCSV() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("Room.csv"))) {
-            writer.write("id,type,price,isBooked\n");  // ✅ Add header
-
+            writer.write("id,type,price,isBooked\n");
             for (Room room : rooms) {
                 writer.write(room.getId() + "," + room.getType() + "," + room.getPrice() + "," + room.isBooked() + "\n");
             }
@@ -117,49 +113,33 @@ public class HotelDeck {
     private void loadBookingsFromCSV() {
         File file = new File(BOOKING_CSV);
         if (!file.exists()) return;
-
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             boolean isFirstLine = true;
-
             while ((line = br.readLine()) != null) {
                 if (isFirstLine) {
-                    isFirstLine = false; // Skip header row
+                    isFirstLine = false;
                     continue;
                 }
-
                 String[] data = line.split(",");
-                if (data.length < 5) {
-                    System.out.println("Skipping invalid line (not enough data): " + line);
-                    continue; // Skip lines that don't have enough data
-                }
-
-                try {
-                    int id = Integer.parseInt(data[0].trim());
-                    int roomId = Integer.parseInt(data[1].trim());
-                    int customerId = Integer.parseInt(data[2].trim());
-                    LocalDate checkInDate = LocalDate.parse(data[3].trim());
-                    LocalDate checkOutDate = LocalDate.parse(data[4].trim());
-
-                    Room room = findRoomById(roomId);
-                    Customer customer = findCustomerById(customerId);
-
-                    if (room != null && customer != null) {
-                        Booking booking = new Booking(id, room, customer, checkInDate, checkOutDate);
-                        bookings.add(booking);
-                        room.setBooked(true); // Mark room as booked
-                    } else {
-                        System.out.println("Invalid room or customer for booking: " + line);
-                    }
-                } catch (NumberFormatException | DateTimeParseException e) {
-                    System.out.println("Skipping invalid line (format error): " + line);
+                if (data.length < 5) continue;
+                int id = Integer.parseInt(data[0].trim());
+                int roomId = Integer.parseInt(data[1].trim());
+                int customerId = Integer.parseInt(data[2].trim());
+                LocalDate checkInDate = LocalDate.parse(data[3].trim());
+                LocalDate checkOutDate = LocalDate.parse(data[4].trim());
+                Room room = findRoomById(roomId);
+                Customer customer = findCustomerById(customerId);
+                if (room != null && customer != null) {
+                    Booking booking = new Booking(id, room, customer, checkInDate, checkOutDate);
+                    bookings.add(booking);
+                    room.setBooked(true);
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | NumberFormatException | DateTimeParseException e) {
             System.out.println("Error loading bookings: " + e.getMessage());
         }
     }
-
 
     private void saveBookingsToCSV() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(BOOKING_CSV))) {
@@ -178,7 +158,7 @@ public class HotelDeck {
     public void addCustomer() {
         System.out.print("Enter customer ID: ");
         int id = scanner.nextInt();
-        scanner.nextLine(); // Clear buffer
+        scanner.nextLine();
 
         if (customerIds.contains(id)) {
             System.out.println("Customer ID already exists!");
@@ -187,15 +167,27 @@ public class HotelDeck {
 
         System.out.print("Enter customer name: ");
         String name = scanner.nextLine();
+        if (!isValidName(name)) {
+            System.out.println("Invalid name. Only alphabets and spaces allowed.");
+            return;
+        }
 
         System.out.print("Enter customer email: ");
         String email = scanner.nextLine();
+        if (!isValidEmail(email)) {
+            System.out.println("Invalid email format.");
+            return;
+        }
 
         System.out.print("Enter customer phone number: ");
-        String phoneNumber = scanner.nextLine();
+        String phone = scanner.nextLine();
+        if (!isValidPhone(phone)) {
+            System.out.println("Phone number must be 10 digits.");
+            return;
+        }
 
-        customers.add(new Customer(id, name, email, phoneNumber)); // Add to LinkedList
-        customerIds.add(id); // Add ID to HashSet for duplicate tracking
+        customers.add(new Customer(id, name, email, phone));
+        customerIds.add(id);
         saveCustomersToCSV();
         System.out.println("Customer added successfully!");
     }
@@ -205,14 +197,11 @@ public class HotelDeck {
             System.out.println("No customers found.");
             return;
         }
-
-        customers.forEach(customer ->
-                System.out.println("ID: " + customer.getId() +
-                        ", Name: " + customer.getName() +
-                        ", Email: " + customer.getEmail() +
-                        ", Phone: " + customer.getPhoneNumber()));
+        for (Customer c : customers) {
+            System.out.println("ID: " + c.getId() + ", Name: " + c.getName() +
+                    ", Email: " + c.getEmail() + ", Phone: " + c.getPhoneNumber());
+        }
     }
-
     public void updateCustomer() {
         System.out.print("Enter customer ID to update: ");
         int customerId = scanner.nextInt();
@@ -275,19 +264,15 @@ public class HotelDeck {
         }
     }
 
-    private Customer findCustomerById(int id) {
-        for (Customer customer : customers) {
-            if (customer.getId() == id) {
-                return customer;
-            }
-        }
-        return null;
-    }
 
     public void addRoom() {
         System.out.print("Enter room ID: ");
         int id = scanner.nextInt();
-        scanner.nextLine(); // Clear buffer
+        scanner.nextLine();
+        if (rooms.stream().anyMatch(room -> room.getId() == id)) {
+            System.out.println("Room ID already exists!");
+            return;
+        }
 
         System.out.print("Enter room type: ");
         String type = scanner.nextLine();
@@ -295,14 +280,9 @@ public class HotelDeck {
         System.out.print("Enter room price: ");
         double price = scanner.nextDouble();
 
-        // Check for duplicates
-        if (rooms.stream().anyMatch(room -> room.getId() == id)) {
-            System.out.println("Room ID already exists!");
-        } else {
-            rooms.add(new Room(id, type, price));
-            saveRoomsToCSV();// Add room to LinkedList
-            System.out.println("Room added successfully.");
-        }
+        rooms.add(new Room(id, type, price));
+        saveRoomsToCSV();
+        System.out.println("Room added successfully!");
     }
 
     public void viewRooms() {
@@ -310,81 +290,57 @@ public class HotelDeck {
             System.out.println("No rooms found.");
             return;
         }
-
-        rooms.forEach(room -> {
-            String status = room.isBooked() ? "Booked" : "Available";
-            System.out.println("Room ID: " + room.getId() +
-                    ", Type: " + room.getType() +
-                    ", Price: " + room.getPrice() +
-                    ", Status: " + status);
-        });
-
+        for (Room room : rooms) {
+            System.out.println("Room ID: " + room.getId() + ", Type: " + room.getType() +
+                    ", Price: " + room.getPrice() + ", Status: " + (room.isBooked() ? "Booked" : "Available"));
+        }
     }
-
-
 
     public void bookRoom() {
         System.out.print("Enter room ID: ");
         int roomId = scanner.nextInt();
         System.out.print("Enter customer ID: ");
         int customerId = scanner.nextInt();
-        scanner.nextLine(); // Clear buffer
+        scanner.nextLine();
 
         Customer customer = findCustomerById(customerId);
         Room room = findRoomById(roomId);
 
-        if (customer == null) {
-            System.out.println("Customer not found.");
+        if (customer == null || room == null || room.isBooked()) {
+            System.out.println("Invalid booking. Check room/customer ID or room availability.");
             return;
         }
 
-        if (room == null) {
-            System.out.println("Room not found.");
-            return;
-        }
-
-        if (room.isBooked()) {
-            System.out.println("Room is already booked!");
-            return;
-        }
-
-        // Input for check-in and check-out dates
-        LocalDate checkInDate = null;
-        LocalDate checkOutDate = null;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate checkInDate;
+        LocalDate checkOutDate;
 
         try {
             System.out.print("Enter Check-in Date (yyyy-MM-dd): ");
             checkInDate = LocalDate.parse(scanner.nextLine(), formatter);
-
             System.out.print("Enter Check-out Date (yyyy-MM-dd): ");
             checkOutDate = LocalDate.parse(scanner.nextLine(), formatter);
 
-            // Validate check-out date is after check-in date
             if (!checkOutDate.isAfter(checkInDate)) {
-                System.out.println("Check-out date must be after check-in date. Booking failed.");
+                System.out.println("Check-out must be after check-in.");
                 return;
             }
         } catch (DateTimeParseException e) {
-            System.out.println("Invalid date format! Booking failed.");
+            System.out.println("Invalid date format.");
             return;
         }
 
-        // Create and store booking
         Booking booking = new Booking(nextBookingId++, room, customer, checkInDate, checkOutDate);
-        bookings.add(booking); // Add booking to list
+        bookings.add(booking);
         room.setBooked(true);
-        saveBookingsToCSV();  // <-- Save booking
-        saveRoomsToCSV(); // Mark room as booked
+        saveBookingsToCSV();
+        saveRoomsToCSV();
+
+        // BILLING
+        long days = java.time.temporal.ChronoUnit.DAYS.between(checkInDate, checkOutDate);
+        double totalCost = days * room.getPrice();
         System.out.println("Room booked successfully!");
-    }
-    private Room findRoomById(int id) {
-        for (Room room : rooms) {
-            if (room.getId() == id) {
-                return room;
-            }
-        }
-        return null;
+        System.out.println("Bill: " + days + " nights × ₹" + room.getPrice() + " = ₹" + totalCost);
     }
 
     public void cancelBooking() {
@@ -393,17 +349,16 @@ public class HotelDeck {
 
         Iterator<Booking> iterator = bookings.iterator();
         while (iterator.hasNext()) {
-            Booking booking = iterator.next();
-            if (booking.getId() == bookingId) {
-                booking.getRoom().setBooked(false); // Mark room as available
+            Booking b = iterator.next();
+            if (b.getId() == bookingId) {
+                b.getRoom().setBooked(false);
                 iterator.remove();
-                saveBookingsToCSV();  // <-- Save booking
-                saveRoomsToCSV(); // Remove booking
-                System.out.println("Booking canceled successfully.");
+                saveBookingsToCSV();
+                saveRoomsToCSV();
+                System.out.println("Booking canceled.");
                 return;
             }
         }
-
         System.out.println("Booking not found.");
     }
 
@@ -413,19 +368,84 @@ public class HotelDeck {
             return;
         }
 
-        bookings.forEach(booking -> System.out.println(
-                "Booking ID: " + booking.getId() +
-                        ", Room ID: " + booking.getRoom().getId() +
-                        ", Customer ID: " + booking.getCustomer().getId() +
-                        ", Check-in Date: " + booking.getCheckInDate() +
-                        ", Check-out Date: " + booking.getCheckOutDate()
-        ));
+        for (Booking b : bookings) {
+            System.out.println("Booking ID: " + b.getId() + ", Room ID: " + b.getRoom().getId() +
+                    ", Customer ID: " + b.getCustomer().getId() +
+                    ", Check-in: " + b.getCheckInDate() +
+                    ", Check-out: " + b.getCheckOutDate());
+        }
+    }
+    public void generateBill() {
+        System.out.print("Enter Customer ID for bill generation: ");
+        int customerId = -1;
+        try {
+            customerId = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid Customer ID format.");
+            return;
+        }
+
+        Customer customer = findCustomerById(customerId);
+        if (customer == null) {
+            System.out.println("Customer not found.");
+            return;
+        }
+
+        List<Booking> customerBookings = new ArrayList<>();
+        for (Booking booking : bookings) {
+            if (booking.getCustomer().getId() == customerId) {
+                customerBookings.add(booking);
+            }
+        }
+
+        if (customerBookings.isEmpty()) {
+            System.out.println("No bookings found for this customer.");
+            return;
+        }
+
+        System.out.println("\n--- BILL SUMMARY ---");
+        System.out.println("Customer: " + customer.getName());
+        System.out.println("Email: " + customer.getEmail());
+        System.out.println("Phone: " + customer.getPhoneNumber());
+        System.out.println("------------------------");
+
+        double grandTotal = 0.0;
+
+        for (Booking booking : customerBookings) {
+            Room room = booking.getRoom();
+            LocalDate checkIn = booking.getCheckInDate();
+            LocalDate checkOut = booking.getCheckOutDate();
+            long nights = java.time.temporal.ChronoUnit.DAYS.between(checkIn, checkOut);
+            double cost = nights * room.getPrice();
+            grandTotal += cost;
+
+            System.out.println("Booking ID: " + booking.getId());
+            System.out.println("Room ID: " + room.getId());
+            System.out.println("Room Type: " + room.getType());
+            System.out.println("Price per Night: " + room.getPrice());
+            System.out.println("Check-in: " + checkIn);
+            System.out.println("Check-out: " + checkOut);
+            System.out.println("Nights Stayed: " + nights);
+            System.out.println("Subtotal: " + cost);
+            System.out.println("------------------------");
+        }
+
+        System.out.println("Grand Total: " + grandTotal);
+        System.out.println("--- END OF BILL ---\n");
     }
 
     public void exit() {
         saveCustomersToCSV();
         saveRoomsToCSV();
         saveBookingsToCSV();
-        System.out.println("Data saved. Exiting...");
+        System.out.println("Data saved. Goodbye!");
+    }
+
+    private Customer findCustomerById(int id) {
+        return customers.stream().filter(c -> c.getId() == id).findFirst().orElse(null);
+    }
+
+    private Room findRoomById(int id) {
+        return rooms.stream().filter(r -> r.getId() == id).findFirst().orElse(null);
     }
 }

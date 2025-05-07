@@ -19,6 +19,7 @@ public class Main {
             System.out.println("7. Book Room");
             System.out.println("8. Cancel Booking");
             System.out.println("9. View Bookings");
+            System.out.println("10. Generate Bill");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
             choice = scanner.nextInt();
@@ -33,6 +34,7 @@ public class Main {
                 case 7 -> hotel.bookRoom();
                 case 8 -> hotel.cancelBooking();
                 case 9 -> hotel.viewBookings();
+                case 10 ->hotel.generateBill();
                 case 0 -> System.out.println("Exiting...");
                 default -> System.out.println("Invalid choice.");
             }
