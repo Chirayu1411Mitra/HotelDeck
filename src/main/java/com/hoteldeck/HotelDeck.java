@@ -156,34 +156,52 @@ public class HotelDeck {
     }
 
     public void addCustomer() {
-        System.out.print("Enter customer ID: ");
-        int id = scanner.nextInt();
-        scanner.nextLine();
-
-        if (customerIds.contains(id)) {
-            System.out.println("Customer ID already exists!");
-            return;
+        int id;
+        while (true) {
+            System.out.print("Enter customer ID: ");
+            try {
+                id = Integer.parseInt(scanner.nextLine());
+                if (customerIds.contains(id)) {
+                    System.out.println("Customer ID already exists!");
+                    continue;
+                }
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a valid integer for ID.");
+            }
         }
 
-        System.out.print("Enter customer name: ");
-        String name = scanner.nextLine();
-        if (!isValidName(name)) {
-            System.out.println("Invalid name. Only alphabets and spaces allowed.");
-            return;
+        String name;
+        while (true) {
+            System.out.print("Enter customer name: ");
+            name = scanner.nextLine();
+            if (!isValidName(name)) {
+                System.out.println("Invalid name. Only alphabets and spaces allowed.");
+            } else {
+                break;
+            }
         }
 
-        System.out.print("Enter customer email: ");
-        String email = scanner.nextLine();
-        if (!isValidEmail(email)) {
-            System.out.println("Invalid email format.");
-            return;
+        String email;
+        while (true) {
+            System.out.print("Enter customer email: ");
+            email = scanner.nextLine();
+            if (!isValidEmail(email)) {
+                System.out.println("Invalid email format.");
+            } else {
+                break;
+            }
         }
 
-        System.out.print("Enter customer phone number: ");
-        String phone = scanner.nextLine();
-        if (!isValidPhone(phone)) {
-            System.out.println("Phone number must be 10 digits.");
-            return;
+        String phone;
+        while (true) {
+            System.out.print("Enter customer phone number: ");
+            phone = scanner.nextLine();
+            if (!isValidPhone(phone)) {
+                System.out.println("Phone number must be 10 digits.");
+            } else {
+                break;
+            }
         }
 
         customers.add(new Customer(id, name, email, phone));
@@ -191,6 +209,7 @@ public class HotelDeck {
         saveCustomersToCSV();
         System.out.println("Customer added successfully!");
     }
+
 
     public void viewCustomers() {
         if (customers.isEmpty()) {
@@ -204,46 +223,67 @@ public class HotelDeck {
     }
     public void updateCustomer() {
         System.out.print("Enter customer ID to update: ");
-        int customerId = scanner.nextInt();
-        scanner.nextLine(); // Clear the input buffer
-
-        Customer customer = findCustomerById(customerId); // Find the customer by ID
-        if (customer == null) {
-            System.out.println("Customer not found.");
+        int id;
+        try {
+            id = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Please enter a valid integer for ID.");
             return;
         }
 
-        // Display existing customer details
-        System.out.println("Current Details: ");
-        System.out.println("Name: " + customer.getName());
-        System.out.println("Email: " + customer.getEmail());
-        System.out.println("Phone Number: " + customer.getPhoneNumber());
-
-        // Prompt user for updated details
-        System.out.print("Enter new name (Leave empty to keep current): ");
-        String newName = scanner.nextLine();
-        if (!newName.isEmpty()) {
-            customer.setName(newName); // Update name if provided
+        Customer customerToUpdate = null;
+        for (Customer customer : customers) {
+            if (customer.getId() == id) {
+                customerToUpdate = customer;
+                break;
+            }
         }
 
-        System.out.print("Enter new email (Leave empty to keep current): ");
-        String newEmail = scanner.nextLine();
-        if (!newEmail.isEmpty()) {
-            customer.setEmail(newEmail); // Update email if provided
+        if (customerToUpdate == null) {
+            System.out.println("Customer with ID " + id + " not found.");
+            return;
         }
 
-        System.out.print("Enter new phone number (Leave empty to keep current): ");
-        String newPhoneNumber = scanner.nextLine();
-        if (!newPhoneNumber.isEmpty()) {
-            customer.setPhoneNumber(newPhoneNumber); // Update phone number if provided
+        String name;
+        while (true) {
+            System.out.print("Enter new customer name (current: " + customerToUpdate.getName() + "): ");
+            name = scanner.nextLine();
+            if (!isValidName(name)) {
+                System.out.println("Invalid name. Only alphabets and spaces allowed.");
+            } else {
+                break;
+            }
         }
 
+        String email;
+        while (true) {
+            System.out.print("Enter new customer email (current: " + customerToUpdate.getEmail() + "): ");
+            email = scanner.nextLine();
+            if (!isValidEmail(email)) {
+                System.out.println("Invalid email format.");
+            } else {
+                break;
+            }
+        }
+
+        String phone;
+        while (true) {
+            System.out.print("Enter new customer phone number (current: " + customerToUpdate.getPhone() + "): ");
+            phone = scanner.nextLine();
+            if (!isValidPhone(phone)) {
+                System.out.println("Phone number must be 10 digits.");
+            } else {
+                break;
+            }
+        }
+
+        customerToUpdate.setName(name);
+        customerToUpdate.setEmail(email);
+        customerToUpdate.setPhone(phone);
+        saveCustomersToCSV();
         System.out.println("Customer updated successfully!");
-        System.out.println("Updated Details: ");
-        System.out.println("Name: " + customer.getName());
-        System.out.println("Email: " + customer.getEmail());
-        System.out.println("Phone Number: " + customer.getPhoneNumber());
     }
+
 
     public void deleteCustomer() {
         System.out.print("Enter customer ID to delete: ");
@@ -258,6 +298,7 @@ public class HotelDeck {
         });
 
         if (removed) {
+            saveCustomersToCSV();
             System.out.println("Customer deleted successfully.");
         } else {
             System.out.println("Customer not found.");
@@ -297,6 +338,25 @@ public class HotelDeck {
     }
 
     public void bookRoom() {
+        // Step 1: Filter and display available rooms
+        List<Room> availableRooms = new ArrayList<>();
+        for (Room room : rooms) {
+            if (!room.isBooked()) { // Check if the room is not booked
+                availableRooms.add(room);
+            }
+        }
+
+        if (availableRooms.isEmpty()) {
+            System.out.println("No rooms are currently available for booking.");
+            return;
+        } else {
+            System.out.println("Available rooms:");
+            for (Room room : availableRooms) {
+                System.out.println("Room ID: " + room.getId() + ", Type: " + room.getType() + ", Price: ₹" + room.getPrice());
+            }
+        }
+
+        // Step 2: Continue with the booking process
         System.out.print("Enter room ID: ");
         int roomId = scanner.nextInt();
         System.out.print("Enter customer ID: ");
@@ -330,19 +390,19 @@ public class HotelDeck {
             return;
         }
 
+        // Step 3: Create and save the booking
         Booking booking = new Booking(nextBookingId++, room, customer, checkInDate, checkOutDate);
         bookings.add(booking);
         room.setBooked(true);
         saveBookingsToCSV();
         saveRoomsToCSV();
 
-        // BILLING
+        // Step 4: Calculate and display the billing
         long days = java.time.temporal.ChronoUnit.DAYS.between(checkInDate, checkOutDate);
         double totalCost = days * room.getPrice();
         System.out.println("Room booked successfully!");
         System.out.println("Bill: " + days + " nights × ₹" + room.getPrice() + " = ₹" + totalCost);
     }
-
     public void cancelBooking() {
         System.out.print("Enter booking ID to cancel: ");
         int bookingId = scanner.nextInt();
