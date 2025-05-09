@@ -268,7 +268,7 @@ public class HotelDeck {
 
         String phone;
         while (true) {
-            System.out.print("Enter new customer phone number (current: " + customerToUpdate.getPhone() + "): ");
+            System.out.print("Enter new customer phone number (current: " + customerToUpdate.getPhoneNumber() + "): ");
             phone = scanner.nextLine();
             if (!isValidPhone(phone)) {
                 System.out.println("Phone number must be 10 digits.");
@@ -279,7 +279,7 @@ public class HotelDeck {
 
         customerToUpdate.setName(name);
         customerToUpdate.setEmail(email);
-        customerToUpdate.setPhone(phone);
+        customerToUpdate.setPhoneNumber(phone);
         saveCustomersToCSV();
         System.out.println("Customer updated successfully!");
     }
@@ -352,7 +352,7 @@ public class HotelDeck {
         } else {
             System.out.println("Available rooms:");
             for (Room room : availableRooms) {
-                System.out.println("Room ID: " + room.getId() + ", Type: " + room.getType() + ", Price: ₹" + room.getPrice());
+                System.out.println("Room ID: " + room.getId() + ", Type: " + room.getType() + ", Price: " + room.getPrice());
             }
         }
 
@@ -401,7 +401,7 @@ public class HotelDeck {
         long days = java.time.temporal.ChronoUnit.DAYS.between(checkInDate, checkOutDate);
         double totalCost = days * room.getPrice();
         System.out.println("Room booked successfully!");
-        System.out.println("Bill: " + days + " nights × ₹" + room.getPrice() + " = ₹" + totalCost);
+        System.out.println("Bill: " + days + " nights × " + room.getPrice() + " = " + totalCost);
     }
     public void cancelBooking() {
         System.out.print("Enter booking ID to cancel: ");
