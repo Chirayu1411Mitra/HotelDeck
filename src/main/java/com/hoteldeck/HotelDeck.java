@@ -327,14 +327,14 @@ public class HotelDeck {
 
         String type;
         while (true) {
-            System.out.print("Enter room type (Single/Double/Delux): ");
+            System.out.print("Enter room type (Single/Double/Deluxe): ");
             type = scanner.nextLine().trim();
-            if (type.equalsIgnoreCase("Single") || type.equalsIgnoreCase("Double") || type.equalsIgnoreCase("Delux")) {
+            if (type.equalsIgnoreCase("Single") || type.equalsIgnoreCase("Double") || type.equalsIgnoreCase("Deluxe")) {
                 // Normalize input (e.g., "single" → "Single")
                 type = type.substring(0, 1).toUpperCase() + type.substring(1).toLowerCase();
                 break;
             } else {
-                System.out.println("Invalid room type. Please enter either 'Single', 'Double', or 'Delux'.");
+                System.out.println("Invalid room type. Please enter either 'Single', 'Double', or 'Deluxe'.");
             }
         }
 
@@ -469,7 +469,7 @@ public class HotelDeck {
         long days = java.time.temporal.ChronoUnit.DAYS.between(checkInDate, checkOutDate);
         double totalCost = days * room.getPrice();
         System.out.println("Room booked successfully!");
-        System.out.println("Bill: " + days + " nights × " + room.getPrice() + " = " + totalCost);
+        System.out.println("Bill: " + days + " nights " + room.getPrice() + " = " + totalCost);
     }
     public void cancelBooking() {
         System.out.print("Enter booking ID to cancel: ");
