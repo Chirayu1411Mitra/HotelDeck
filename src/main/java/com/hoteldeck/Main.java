@@ -16,10 +16,11 @@ public class Main {
             System.out.println("4. Delete Customer");
             System.out.println("5. Add Room");
             System.out.println("6. View Rooms");
-            System.out.println("7. Book Room");
-            System.out.println("8. Cancel Booking");
-            System.out.println("9. View Bookings");
-            System.out.println("10. Generate Bill");
+            System.out.println("7. Delete Room");
+            System.out.println("8. Book Room");
+            System.out.println("9. Cancel Booking");
+            System.out.println("10. View Bookings");
+            System.out.println("11. Generate Bill");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
             choice = scanner.nextInt();
@@ -31,10 +32,11 @@ public class Main {
                 case 4 -> hotel.deleteCustomer();
                 case 5 -> hotel.addRoom();
                 case 6 -> hotel.viewRooms();
-                case 7 -> hotel.bookRoom();
-                case 8 -> hotel.cancelBooking();
-                case 9 -> hotel.viewBookings();
-                case 10 ->hotel.generateBill();
+                case 7 -> hotel.deleteRoomById();
+                case 8 -> hotel.bookRoom();
+                case 9 -> hotel.cancelBooking();
+                case 10 -> hotel.viewBookings();
+                case 11 ->hotel.generateBill();
                 case 0 -> System.out.println("Exiting...");
                 default -> System.out.println("Invalid choice.");
             }

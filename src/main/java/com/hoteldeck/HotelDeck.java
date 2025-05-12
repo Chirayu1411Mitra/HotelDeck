@@ -61,6 +61,8 @@ public class HotelDeck {
     }
 
     private void saveCustomersToCSV() {
+        customers.sort(Comparator.comparingInt(Customer::getId));
+
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(CUSTOMER_CSV))) {
             writer.write("id,name,email,phoneNumber\n");
             for (Customer customer : customers) {
@@ -99,7 +101,9 @@ public class HotelDeck {
         }
     }
 
-    public static void saveRoomsToCSV() {
+    public void saveRoomsToCSV() {
+        rooms.sort(Comparator.comparingInt(Room::getId)); // Sort by ID
+
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("Room.csv"))) {
             writer.write("id,type,price,isBooked\n");
             for (Room room : rooms) {
@@ -109,6 +113,7 @@ public class HotelDeck {
             System.out.println("Error saving room data to CSV: " + e.getMessage());
         }
     }
+
 
     private void loadBookingsFromCSV() {
         File file = new File(BOOKING_CSV);
@@ -142,6 +147,8 @@ public class HotelDeck {
     }
 
     private void saveBookingsToCSV() {
+        bookings.sort(Comparator.comparingInt(Booking::getId));
+
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(BOOKING_CSV))) {
             writer.write("id,roomId,customerId,checkInDate,checkOutDate\n");
             for (Booking booking : bookings) {
@@ -211,11 +218,14 @@ public class HotelDeck {
     }
 
 
+
     public void viewCustomers() {
         if (customers.isEmpty()) {
             System.out.println("No customers found.");
             return;
         }
+        customers.sort(Comparator.comparingInt(Customer::getId));
+
         for (Customer c : customers) {
             System.out.println("ID: " + c.getId() + ", Name: " + c.getName() +
                     ", Email: " + c.getEmail() + ", Phone: " + c.getPhoneNumber());
@@ -315,27 +325,85 @@ public class HotelDeck {
             return;
         }
 
-        System.out.print("Enter room type: ");
-        String type = scanner.nextLine();
+        String type;
+        while (true) {
+            System.out.print("Enter room type (Single/Double/Delux): ");
+            type = scanner.nextLine().trim();
+            if (type.equalsIgnoreCase("Single") || type.equalsIgnoreCase("Double") || type.equalsIgnoreCase("Delux")) {
+                // Normalize input (e.g., "single" → "Single")
+                type = type.substring(0, 1).toUpperCase() + type.substring(1).toLowerCase();
+                break;
+            } else {
+                System.out.println("Invalid room type. Please enter either 'Single', 'Double', or 'Delux'.");
+            }
+        }
 
-        System.out.print("Enter room price: ");
-        double price = scanner.nextDouble();
+        double price;
+        while (true) {
+            System.out.print("Enter room price: ");
+            try {
+                price = Double.parseDouble(scanner.nextLine());
+                if (price <= 0) {
+                    System.out.println("Price must be positive.");
+                    continue;
+                }
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid price. Please enter a valid number.");
+            }
+        }
 
         rooms.add(new Room(id, type, price));
         saveRoomsToCSV();
         System.out.println("Room added successfully!");
     }
 
+
     public void viewRooms() {
         if (rooms.isEmpty()) {
             System.out.println("No rooms found.");
             return;
         }
+        rooms.sort(Comparator.comparingInt(Room::getId)); // Always sort before displaying
+
         for (Room room : rooms) {
             System.out.println("Room ID: " + room.getId() + ", Type: " + room.getType() +
                     ", Price: " + room.getPrice() + ", Status: " + (room.isBooked() ? "Booked" : "Available"));
         }
     }
+    public void deleteRoomById() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter Room ID to delete: ");
+        String idStr = scanner.nextLine().trim();
+
+        try {
+            int id = Integer.parseInt(idStr);
+            boolean found = false;
+
+            Iterator<Room> iterator = rooms.iterator();
+            while (iterator.hasNext()) {
+                Room r = iterator.next();
+                if (r.getId() == id) {
+                    iterator.remove();
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found) {
+                System.out.println("Room deleted successfully.");
+                // Sort and save after deletion
+                rooms.sort(Comparator.comparingInt(Room::getId));
+                saveRoomsToCSV();
+            } else {
+                System.out.println("Room with ID " + id + " not found.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid Room ID format.");
+        }
+    }
+
+
 
     public void bookRoom() {
         // Step 1: Filter and display available rooms
@@ -427,6 +495,7 @@ public class HotelDeck {
             System.out.println("No bookings found.");
             return;
         }
+        bookings.sort(Comparator.comparingInt(Booking::getId));
 
         for (Booking b : bookings) {
             System.out.println("Booking ID: " + b.getId() + ", Room ID: " + b.getRoom().getId() +
@@ -451,49 +520,26 @@ public class HotelDeck {
             return;
         }
 
-        List<Booking> customerBookings = new ArrayList<>();
-        for (Booking booking : bookings) {
-            if (booking.getCustomer().getId() == customerId) {
-                customerBookings.add(booking);
+        boolean hasBookings = false;
+        double totalBill = 0;
+        for (Booking b : bookings) {
+            if (b.getCustomer().getId() == customerId) {
+                long days = java.time.temporal.ChronoUnit.DAYS.between(b.getCheckInDate(), b.getCheckOutDate());
+                double cost = days * b.getRoom().getPrice();
+                System.out.println("Booking ID: " + b.getId() + ", Room ID: " + b.getRoom().getId() +
+                        ", Stay: " + days + " nights, Cost: " + cost);
+                totalBill += cost;
+                hasBookings = true;
             }
         }
 
-        if (customerBookings.isEmpty()) {
+        if (!hasBookings) {
             System.out.println("No bookings found for this customer.");
-            return;
+        } else {
+            System.out.println("Total bill for Customer ID " + customerId + ": " + totalBill);
         }
-
-        System.out.println("\n--- BILL SUMMARY ---");
-        System.out.println("Customer: " + customer.getName());
-        System.out.println("Email: " + customer.getEmail());
-        System.out.println("Phone: " + customer.getPhoneNumber());
-        System.out.println("------------------------");
-        
-
-        double grandTotal = 0.0;
-
-        for (Booking booking : customerBookings) {
-            Room room = booking.getRoom();
-            LocalDate checkIn = booking.getCheckInDate();
-            LocalDate checkOut = booking.getCheckOutDate();
-            long nights = java.time.temporal.ChronoUnit.DAYS.between(checkIn, checkOut);
-            double cost = nights * room.getPrice();
-            grandTotal += cost;
-
-            System.out.println("Booking ID: " + booking.getId());
-            System.out.println("Room ID: " + room.getId());
-            System.out.println("Room Type: " + room.getType());
-            System.out.println("Price per Night: " + room.getPrice());
-            System.out.println("Check-in: " + checkIn);
-            System.out.println("Check-out: " + checkOut);
-            System.out.println("Nights Stayed: " + nights);
-            System.out.println("Subtotal: " + cost);
-            System.out.println("------------------------");
-        }
-
-        System.out.println("Grand Total: " + grandTotal);
-        System.out.println("--- END OF BILL ---\n");
     }
+
 
     public void exit() {
         saveCustomersToCSV();
