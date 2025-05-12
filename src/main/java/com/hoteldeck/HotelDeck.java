@@ -468,6 +468,7 @@ public class HotelDeck {
         System.out.println("Email: " + customer.getEmail());
         System.out.println("Phone: " + customer.getPhoneNumber());
         System.out.println("------------------------");
+        
 
         double grandTotal = 0.0;
 
