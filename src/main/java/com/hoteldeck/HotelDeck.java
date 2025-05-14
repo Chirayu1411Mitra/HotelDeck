@@ -61,7 +61,7 @@ public class HotelDeck {
     }
 
     private void saveCustomersToCSV() {
-        customers.sort(Comparator.comparingInt(Customer::getId));
+        customers = mergeSortCustomers(customers);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(CUSTOMER_CSV))) {
             writer.write("id,name,email,phoneNumber\n");
@@ -102,7 +102,7 @@ public class HotelDeck {
     }
 
     public void saveRoomsToCSV() {
-        rooms.sort(Comparator.comparingInt(Room::getId)); // Sort by ID
+        rooms = mergeSortRooms(rooms);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("Room.csv"))) {
             writer.write("id,type,price,isBooked\n");
@@ -224,7 +224,7 @@ public class HotelDeck {
             System.out.println("No customers found.");
             return;
         }
-        customers.sort(Comparator.comparingInt(Customer::getId));
+        customers = mergeSortCustomers(customers);
 
         for (Customer c : customers) {
             System.out.println("ID: " + c.getId() + ", Name: " + c.getName() +
@@ -241,13 +241,7 @@ public class HotelDeck {
             return;
         }
 
-        Customer customerToUpdate = null;
-        for (Customer customer : customers) {
-            if (customer.getId() == id) {
-                customerToUpdate = customer;
-                break;
-            }
-        }
+        Customer customerToUpdate = findCustomerById(id);
 
         if (customerToUpdate == null) {
             System.out.println("Customer with ID " + id + " not found.");
@@ -297,17 +291,18 @@ public class HotelDeck {
 
     public void deleteCustomer() {
         System.out.print("Enter customer ID to delete: ");
-        int id = scanner.nextInt();
+        int id;
+        try {
+            id = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Please enter a valid integer for ID.");
+            return;
+        }
 
-        boolean removed = customers.removeIf(customer -> {
-            if (customer.getId() == id) {
-                customerIds.remove(id);
-                return true;
-            }
-            return false;
-        });
-
-        if (removed) {
+        Customer customerToRemove = findCustomerById(id);
+        if (customerToRemove != null) {
+            customers.remove(customerToRemove);
+            customerIds.remove(id);
             saveCustomersToCSV();
             System.out.println("Customer deleted successfully.");
         } else {
@@ -364,36 +359,26 @@ public class HotelDeck {
             System.out.println("No rooms found.");
             return;
         }
-        rooms.sort(Comparator.comparingInt(Room::getId)); // Always sort before displaying
+        rooms = mergeSortRooms(rooms);
 
         for (Room room : rooms) {
             System.out.println("Room ID: " + room.getId() + ", Type: " + room.getType() +
                     ", Price: " + room.getPrice() + ", Status: " + (room.isBooked() ? "Booked" : "Available"));
         }
     }
+
     public void deleteRoomById() {
-        Scanner scanner = new Scanner(System.in);
         System.out.print("Enter Room ID to delete: ");
         String idStr = scanner.nextLine().trim();
 
         try {
             int id = Integer.parseInt(idStr);
-            boolean found = false;
 
-            Iterator<Room> iterator = rooms.iterator();
-            while (iterator.hasNext()) {
-                Room r = iterator.next();
-                if (r.getId() == id) {
-                    iterator.remove();
-                    found = true;
-                    break;
-                }
-            }
-
-            if (found) {
+            Room roomToRemove = findRoomById(id);
+            if (roomToRemove != null) {
+                rooms.remove(roomToRemove);
                 System.out.println("Room deleted successfully.");
-                // Sort and save after deletion
-                rooms.sort(Comparator.comparingInt(Room::getId));
+                rooms = mergeSortRooms(rooms);
                 saveRoomsToCSV();
             } else {
                 System.out.println("Room with ID " + id + " not found.");
@@ -404,12 +389,10 @@ public class HotelDeck {
     }
 
 
-
     public void bookRoom() {
-        // Step 1: Filter and display available rooms
         List<Room> availableRooms = new ArrayList<>();
         for (Room room : rooms) {
-            if (!room.isBooked()) { // Check if the room is not booked
+            if (!room.isBooked()) {
                 availableRooms.add(room);
             }
         }
@@ -424,7 +407,6 @@ public class HotelDeck {
             }
         }
 
-        // Step 2: Continue with the booking process
         System.out.print("Enter room ID: ");
         int roomId = scanner.nextInt();
         System.out.print("Enter customer ID: ");
@@ -458,22 +440,22 @@ public class HotelDeck {
             return;
         }
 
-        // Step 3: Create and save the booking
         Booking booking = new Booking(nextBookingId++, room, customer, checkInDate, checkOutDate);
         bookings.add(booking);
         room.setBooked(true);
         saveBookingsToCSV();
         saveRoomsToCSV();
 
-        // Step 4: Calculate and display the billing
         long days = java.time.temporal.ChronoUnit.DAYS.between(checkInDate, checkOutDate);
         double totalCost = days * room.getPrice();
         System.out.println("Room booked successfully!");
         System.out.println("Bill: " + days + " nights " + room.getPrice() + " = " + totalCost);
     }
+
     public void cancelBooking() {
         System.out.print("Enter booking ID to cancel: ");
         int bookingId = scanner.nextInt();
+        scanner.nextLine();
 
         Iterator<Booking> iterator = bookings.iterator();
         while (iterator.hasNext()) {
@@ -504,6 +486,7 @@ public class HotelDeck {
                     ", Check-out: " + b.getCheckOutDate());
         }
     }
+
     public void generateBill() {
         System.out.print("Enter Customer ID for bill generation: ");
         int customerId = -1;
@@ -540,7 +523,6 @@ public class HotelDeck {
         }
     }
 
-
     public void exit() {
         saveCustomersToCSV();
         saveRoomsToCSV();
@@ -549,10 +531,123 @@ public class HotelDeck {
     }
 
     private Customer findCustomerById(int id) {
-        return customers.stream().filter(c -> c.getId() == id).findFirst().orElse(null);
+        customers = mergeSortCustomers(customers);
+        int left = 0;
+        int right = customers.size() - 1;
+
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            Customer midCustomer = customers.get(mid);
+
+            if (midCustomer.getId() == id) {
+                return midCustomer;
+            } else if (midCustomer.getId() < id) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        return null;
     }
 
     private Room findRoomById(int id) {
-        return rooms.stream().filter(r -> r.getId() == id).findFirst().orElse(null);
+        rooms = mergeSortRooms(rooms);
+        int left = 0;
+        int right = rooms.size() - 1;
+
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            Room midRoom = rooms.get(mid);
+
+            if (midRoom.getId() == id) {
+                return midRoom;
+            } else if (midRoom.getId() < id) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        return null;
+    }
+
+    // Merge sort for customers
+    private LinkedList<Customer> mergeSortCustomers(LinkedList<Customer> list) {
+        if (list.size() <= 1) {
+            return list;
+        }
+
+        LinkedList<Customer> left = new LinkedList<>();
+        LinkedList<Customer> right = new LinkedList<>();
+        int middle = list.size() / 2;
+
+        int count = 0;
+        for (Customer c : list) {
+            if (count < middle) {
+                left.add(c);
+            } else {
+                right.add(c);
+            }
+            count++;
+        }
+
+        left = mergeSortCustomers(left);
+        right = mergeSortCustomers(right);
+
+        return mergeCustomers(left, right);
+    }
+
+    private LinkedList<Customer> mergeCustomers(LinkedList<Customer> left, LinkedList<Customer> right) {
+        LinkedList<Customer> result = new LinkedList<>();
+        while (!left.isEmpty() && !right.isEmpty()) {
+            if (left.getFirst().getId() <= right.getFirst().getId()) {
+                result.add(left.removeFirst());
+            } else {
+                result.add(right.removeFirst());
+            }
+        }
+        result.addAll(left);
+        result.addAll(right);
+        return result;
+    }
+
+    // Merge sort for rooms
+    private LinkedList<Room> mergeSortRooms(LinkedList<Room> list) {
+        if (list.size() <= 1) {
+            return list;
+        }
+
+        LinkedList<Room> left = new LinkedList<>();
+        LinkedList<Room> right = new LinkedList<>();
+        int middle = list.size() / 2;
+
+        int count = 0;
+        for (Room r : list) {
+            if (count < middle) {
+                left.add(r);
+            } else {
+                right.add(r);
+            }
+            count++;
+        }
+
+        left = mergeSortRooms(left);
+        right = mergeSortRooms(right);
+
+        return mergeRooms(left, right);
+    }
+
+    private LinkedList<Room> mergeRooms(LinkedList<Room> left, LinkedList<Room> right) {
+        LinkedList<Room> result = new LinkedList<>();
+        while (!left.isEmpty() && !right.isEmpty()) {
+            if (left.getFirst().getId() <= right.getFirst().getId()) {
+                result.add(left.removeFirst());
+            } else {
+                result.add(right.removeFirst());
+            }
+        }
+        result.addAll(left);
+        result.addAll(right);
+        return result;
     }
 }
+

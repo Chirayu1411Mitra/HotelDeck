@@ -1,2 +1,5 @@
 id,type,price,isBooked
 101,Double,5000.0,true
+102,Double,5000.0,false
+103,Single,3000.0,false
+105,Double,5000.0,true
