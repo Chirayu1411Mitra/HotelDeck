@@ -139,6 +139,9 @@ public class HotelDeck {
                     Booking booking = new Booking(id, room, customer, checkInDate, checkOutDate);
                     bookings.add(booking);
                     room.setBooked(true);
+                    if (id >= nextBookingId) {
+                        nextBookingId = id + 1;
+                    }
                 }
             }
         } catch (IOException | NumberFormatException | DateTimeParseException e) {
@@ -477,7 +480,7 @@ public class HotelDeck {
             System.out.println("No bookings found.");
             return;
         }
-        bookings.sort(Comparator.comparingInt(Booking::getId));
+        bookings = mergeSortBookings(bookings);
 
         for (Booking b : bookings) {
             System.out.println("Booking ID: " + b.getId() + ", Room ID: " + b.getRoom().getId() +
@@ -649,5 +652,45 @@ public class HotelDeck {
         result.addAll(right);
         return result;
     }
+    private LinkedList<Booking> mergeSortBookings(LinkedList<Booking> list) {
+        if (list.size() <= 1) {
+            return list;
+        }
+
+        LinkedList<Booking> left = new LinkedList<>();
+        LinkedList<Booking> right = new LinkedList<>();
+        int middle = list.size() / 2;
+
+        int count = 0;
+        for (Booking b : list) {
+            if (count < middle) {
+                left.add(b);
+            } else {
+                right.add(b);
+            }
+            count++;
+        }
+
+        left = mergeSortBookings(left);
+        right = mergeSortBookings(right);
+
+        return mergeBookings(left, right);
+    }
+
+    private LinkedList<Booking> mergeBookings(LinkedList<Booking> left, LinkedList<Booking> right) {
+        LinkedList<Booking> result = new LinkedList<>();
+        while (!left.isEmpty() && !right.isEmpty()) {
+            if (left.getFirst().getId() <= right.getFirst().getId()) {
+                result.add(left.removeFirst());
+            } else {
+                result.add(right.removeFirst());
+            }
+        }
+        result.addAll(left);
+        result.addAll(right);
+        return result;
+    }
+
+
 }
 
